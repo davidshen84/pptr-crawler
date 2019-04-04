@@ -1,0 +1,42 @@
+{
+  "extends": [
+    "tslint:recommended"
+  ],
+  "jsRules": {},
+  "rules": {
+    "quotemark": [
+      true,
+      "single"
+    ],
+    "curly": [
+      true,
+      "as-needed"
+    ],
+    "radix": [
+      false
+    ],
+    "arrow-parens": [
+      true,
+      "ban-single-arg-parens"
+    ],
+    "whitespace": [
+      true,
+      "check-branch",
+      "check-decl",
+      "check-operator",
+      //      "check-module",
+      "check-separator",
+      "check-rest-spread",
+      "check-type",
+      //      "check-typecast",
+      "check-type-operator"
+//      "check-preblock",
+//      "check-postbrace"
+    ],
+    "no-console": [
+      true,
+      "error"
+    ]
+  },
+  "rulesDirectory": []
+}
