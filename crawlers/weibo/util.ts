@@ -1,5 +1,5 @@
 import fs from 'fs';
-import {ElementHandle, Page} from 'puppeteer';
+import {Browser, ElementHandle, launch, Page, WaitForSelectorOptions} from 'puppeteer';
 import {promisify} from 'util';
 import {IPost} from './types';
 
@@ -58,4 +58,43 @@ export async function extractUserId(page: Page, h: ElementHandle): Promise<strin
     return matches[1];
 
   return '';
+}
+
+export class SimpleBrowser {
+
+  private readonly promiseBrowser: Promise<Browser>;
+
+  constructor() {
+    this.promiseBrowser = launch({
+      headless: true,
+      ignoreHTTPSErrors: true,
+    });
+
+  }
+
+  public async launch() {
+    const browser = await this.promiseBrowser;
+    browser.on('disconnected', async () => {
+      console.log('disconn');
+      await browser.close();
+    });
+  }
+
+  public async newPage(url: string, waitfor?: { selector: string, options: WaitForSelectorOptions }) {
+    const browser = await this.promiseBrowser;
+    const page = await browser.newPage();
+
+    await page.on('request', r => !whitelist.includes(r.resourceType()) ? r.abort() : r.continue())
+      .setRequestInterception(true);
+    await page.goto(url, {waitUntil: 'domcontentloaded'});
+    if (waitfor)
+      await page.waitForSelector(waitfor.selector, waitfor.options);
+
+    return page;
+  }
+
+  public async close() {
+    const browser = await this.promiseBrowser;
+    await browser.close();
+  }
 }

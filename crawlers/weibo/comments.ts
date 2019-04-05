@@ -1,28 +1,19 @@
-import {launch} from 'puppeteer';
 import {IComment, IUser} from './types';
-import {normalizeTextContent, whitelist} from './util';
+import {normalizeTextContent, SimpleBrowser} from './util';
 
 const feedSelector = 'div.WB_feed[node-type=feed_list] div[tbinfo]';
 const commentsSelector = 'div.WB_feed div[node-type=comment_list] > div[comment_id]';
 
-export async function get_comments(postId: string = '1860563805/Hhm7u5f61') {
+export async function get_comments(browser: SimpleBrowser, postId: string = '1860563805/Hhm7u5f61') {
   const url = `https://weibo.com/${postId}`;
-  const browser = await launch();
-  const page = await browser.newPage();
-
-  await page.on('request',
-    r => !whitelist.includes(r.resourceType()) ? r.abort() : r.continue())
-    .setRequestInterception(true);
-
-  await page.goto(url, {waitUntil: 'domcontentloaded'});
-
-  await page.waitForSelector(commentsSelector, {timeout: 50000});
+  const page = await browser.newPage(url, {selector: commentsSelector, options: {timeout: 50000}});
 
   const feedHandler = await page.$(feedSelector);
   const commentsHandler = await page.$$(commentsSelector);
 
   const feedId = await page.evaluate((e: Element) => e.getAttribute('mid'), feedHandler);
-  return await Promise.all(
+
+  const comments = await Promise.all(
     await commentsHandler.map(async h => ({
       commentId: await page.evaluate((e: Element) => e.getAttribute('comment_id'), h),
       feedId,
@@ -38,4 +29,7 @@ export async function get_comments(postId: string = '1860563805/Hhm7u5f61') {
         }) as IUser)),
       } as IUser,
     }) as IComment));
+
+  await page.close();
+  return comments;
 }

@@ -1,21 +1,9 @@
-import {launch} from 'puppeteer';
 import {IPost, IUser} from './types';
-import {normalizeTextContent, sanitize_timestring, whitelist, writeFile, writePosts} from './util';
+import {normalizeTextContent, sanitize_timestring, SimpleBrowser} from './util';
 
-export async function get_headline(category: string = '1760', loop: number = 0) {
+export async function get_headline(browser: SimpleBrowser, category: string, loop: number = 0) {
   const url = `https://weibo.com/?category=${category}`;
-
-  const browser = await launch({
-    headless: true,
-    ignoreHTTPSErrors: true,
-  });
-  const page = await browser.newPage();
-
-  await page.on('request', r => !whitelist.includes(r.resourceType()) ? r.abort() : r.continue())
-    .setRequestInterception(true);
-
-  await page.goto(url, {waitUntil: 'domcontentloaded'});
-  await page.waitForSelector('.W_loading', {timeout: 10000});
+  const page = await browser.newPage(url, {selector: '.W_loading', options: {timeout: 10000}});
 
   while (loop-- > 0) {
     await page.$eval('.W_loading', element => {
@@ -53,11 +41,9 @@ export async function get_headline(category: string = '1760', loop: number = 0) 
       } as IPost;
     }));
 
-  await writePosts(headlines, 'headline.txt');
+  // await writePosts(headlines, 'headline.txt');
   // await page.screenshot({path: 'screen.png', fullPage: true});
-  await writeFile('headline.html', await page.content());
-
-  await browser.close();
-
+  // await writeFile('headline.html', await page.content());
+  await page.close();
   return headlines;
 }

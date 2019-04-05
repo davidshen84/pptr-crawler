@@ -1,20 +1,11 @@
-import {launch} from 'puppeteer';
 import {IPost, IUser} from './types';
-import {extractUserId, normalizeTextContent, whitelist, writeFile, writePosts} from './util';
+import {extractUserId, normalizeTextContent, SimpleBrowser} from './util';
 
 const feedListSelector = 'div.WB_feed[node-type="feed_list"] div[action-type="feed_list_item"]';
 
-export async function get_user_timeline(userId: string = 'guimitai2') {
+export async function get_user_timeline(browser: SimpleBrowser, userId: string = 'guimitai2') {
   const url = `https://weibo.com/${userId}`;
-  const browser = await launch();
-  const page = await browser.newPage();
-
-  await page.on('request',
-    r => !whitelist.includes(r.resourceType()) ? r.abort() : r.continue())
-    .setRequestInterception(true);
-
-  await page.goto(url, {waitUntil: 'domcontentloaded'});
-  await page.waitForSelector(feedListSelector, {timeout: 50000});
+  const page = await browser.newPage(url, {selector: feedListSelector, options: {timeout: 50000}});
 
   const feedsHandlers = await page.$$(feedListSelector);
   const posts = await Promise.all(await feedsHandlers.map(async h => ({
@@ -43,11 +34,9 @@ export async function get_user_timeline(userId: string = 'guimitai2') {
     } as IUser,
   }) as IPost));
 
-  await writePosts(posts, 'timeline.txt');
+  // await writePosts(posts, 'timeline.txt');
   // await page.screenshot({path: 'screen.png', fullPage: true});
-  await writeFile('user_timeline.html', await page.content());
-
-  await browser.close();
-
+  // await writeFile('user_timeline.html', await page.content());
+  await page.close();
   return posts;
 }
