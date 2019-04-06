@@ -1,5 +1,5 @@
 import {IPost, IUser} from './types';
-import {normalizeTextContent, sanitize_timestring, SimpleBrowser, writeFile} from './util';
+import {normalizeTextContent, sanitize_timestring, SimpleBrowser} from './util';
 
 export async function get_headline(browser: SimpleBrowser, category: string, loop: number = 0) {
   const url = `https://weibo.com/?category=${category}`;
@@ -45,12 +45,11 @@ export async function get_headline(browser: SimpleBrowser, category: string, loo
       } as IPost;
     }))
     .then(async result => {
-      // await page.close();
-      return result;
-    })
-    .finally(async () => {
-      console.log('close page');
-      console.info(await page.title());
       await page.close();
-    });
+      return result;
+    }, async r => {
+      await page.close();
+      throw r;
+    })
+    ;
 }

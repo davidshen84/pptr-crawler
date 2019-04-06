@@ -13,7 +13,7 @@ import Signals = NodeJS.Signals;
     server.close(() => process.exit(0));
     res.status(200).end();
   });
-  app.use((req, res, next) =>{
+  app.use((req, res, next) => {
     console.info(`${req.method} ${req.url} at ${new Date()}.`);
     next();
   });
@@ -37,8 +37,6 @@ import Signals = NodeJS.Signals;
     server.close();
     process.exit(-1);
   });
-
-  module.exports = app;
 })();
 
 (['SIGINT', 'SIGTERM'] as Signals[]).forEach(s => {

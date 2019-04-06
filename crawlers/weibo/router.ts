@@ -1,12 +1,17 @@
-import express from 'express';
+import {Response, Router} from 'express';
 import * as url from 'url';
 import {get_comments} from './comments';
 import {get_headline} from './headline';
 import {get_user_timeline} from './user_timeline';
 import {SimpleBrowser} from './util';
 
+function logErrorAndFail(res: Response, r: Error) {
+  console.error(r.message);
+  return res.status(500).end();
+}
+
 export function buildRouter(browser: SimpleBrowser) {
-  const router = express.Router();
+  const router = Router();
 
   router.get(/\/timeline\/(.+)/, async (req, res) =>
     await get_user_timeline(browser, req.params[0])
@@ -14,7 +19,7 @@ export function buildRouter(browser: SimpleBrowser) {
         posts.forEach(p => res.write(`${JSON.stringify(p)}\n`));
         res.status(200).end();
       })
-      .catch(r => res.status(500).send(r).end()));
+      .catch(r => logErrorAndFail(res, r)));
 
   router
     .get('/headline', (req, res) => {
@@ -45,7 +50,7 @@ export function buildRouter(browser: SimpleBrowser) {
         headlines.forEach(h => res.write(`${JSON.stringify(h)}\n`));
         res.status(200).end();
       })
-        .catch(r => res.status(500).send(r).end()));
+        .catch(r => logErrorAndFail(res, r)));
 
   router.get(/\/comments\/(.+)/, async (req, res) =>
     await get_comments(browser, req.params[0])
@@ -53,7 +58,7 @@ export function buildRouter(browser: SimpleBrowser) {
         comments.forEach(c => res.write(`${JSON.stringify(c)}\n`));
         return res.status(200).end();
       })
-      .catch(r => res.status(500).send(r).end()));
+      .catch(r => logErrorAndFail(res, r)));
 
   return router;
 }
