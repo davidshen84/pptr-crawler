@@ -1,5 +1,5 @@
 import {IPost, IUser} from './types';
-import {normalizeTextContent, sanitize_timestring, SimpleBrowser} from './util';
+import {normalizeTextContent, sanitize_timestring, SimpleBrowser, writeFile} from './util';
 
 export async function get_headline(browser: SimpleBrowser, category: string, loop: number = 0) {
   const url = `https://weibo.com/?category=${category}`;
@@ -17,7 +17,11 @@ export async function get_headline(browser: SimpleBrowser, category: string, loo
   }
 
   const headlineHandles = await page.$$('#plc_main .UG_contents .UG_list_b');
-  const headlines = await Promise.all(
+  await writeFile('headline.html', await page.content());
+  // await writePosts(headlines, 'headline.txt');
+  // await page.screenshot({path: 'screen.png', fullPage: true});
+
+  return await Promise.all(
     headlineHandles.map(async h => {
       const counts: number[] = await h.$$eval('.subinfo_box .subinfo_rgt', elements =>
         elements.map(e => (e.querySelector('em:nth-child(2)') || {textContent: '0'}).textContent)
@@ -39,11 +43,14 @@ export async function get_headline(browser: SimpleBrowser, category: string, loo
           url: await h.$eval('div.list_des > div.subinfo_box a', e => (e as HTMLAnchorElement).href),
         } as IUser,
       } as IPost;
-    }));
-
-  // await writePosts(headlines, 'headline.txt');
-  // await page.screenshot({path: 'screen.png', fullPage: true});
-  // await writeFile('headline.html', await page.content());
-  await page.close();
-  return headlines;
+    }))
+    .then(async result => {
+      // await page.close();
+      return result;
+    })
+    .finally(async () => {
+      console.log('close page');
+      console.info(await page.title());
+      await page.close();
+    });
 }

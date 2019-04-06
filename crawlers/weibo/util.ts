@@ -4,7 +4,6 @@ import {promisify} from 'util';
 import {IPost} from './types';
 
 export const writeFile = promisify(fs.writeFile);
-export const whitelist = ['document', 'script', 'xhr', 'fetch'];
 
 /**
  * Try to guess and convert a date time display string to a {Date}.
@@ -68,27 +67,22 @@ export class SimpleBrowser {
     this.promiseBrowser = launch({
       headless: true,
       ignoreHTTPSErrors: true,
-    });
-
+    })
+      .then(browser =>
+        browser.on('disconnected', () =>
+          console.log('Puppeteer disconnected from the browser process.')));
   }
 
-  public async launch() {
-    const browser = await this.promiseBrowser;
-    browser.on('disconnected', async () => {
-      console.log('disconn');
-      await browser.close();
-    });
-  }
-
-  public async newPage(url: string, waitfor?: { selector: string, options: WaitForSelectorOptions }) {
+  public async newPage(url: string, waitFor?: { selector: string, options: WaitForSelectorOptions }) {
+    const whitelist = ['document', 'script', 'xhr', 'fetch'];
     const browser = await this.promiseBrowser;
     const page = await browser.newPage();
 
     await page.on('request', r => !whitelist.includes(r.resourceType()) ? r.abort() : r.continue())
       .setRequestInterception(true);
     await page.goto(url, {waitUntil: 'domcontentloaded'});
-    if (waitfor)
-      await page.waitForSelector(waitfor.selector, waitfor.options);
+    if (waitFor)
+      await page.waitForSelector(waitFor.selector, waitFor.options);
 
     return page;
   }

@@ -34,8 +34,7 @@
 //      "check-postbrace"
     ],
     "no-console": [
-      true,
-      "error"
+      false
     ]
   },
   "rulesDirectory": []
