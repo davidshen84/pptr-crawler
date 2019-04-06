@@ -8,7 +8,7 @@
     "start": "node app/app.js"
   },
   "author": "Xi Shen",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "express": "^4.16.4",
     "express-longpoll": "0.0.4",
