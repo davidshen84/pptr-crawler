@@ -65,6 +65,7 @@ export class SimpleBrowser {
 
   constructor() {
     this.promiseBrowser = launch({
+      args: ['--no-sandbox'],
       headless: true,
       ignoreHTTPSErrors: true,
     })

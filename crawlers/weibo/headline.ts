@@ -17,7 +17,7 @@ export async function get_headline(browser: SimpleBrowser, category: string, loo
   }
 
   const headlineHandles = await page.$$('#plc_main .UG_contents .UG_list_b');
-  await writeFile('headline.html', await page.content());
+  // await writeFile('headline.html', await page.content());
   // await writePosts(headlines, 'headline.txt');
   // await page.screenshot({path: 'screen.png', fullPage: true});
 
