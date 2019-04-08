@@ -1,25 +1,23 @@
-import {Response, Router} from 'express';
+import {NextFunction, Request, Response, Router} from 'express';
 import * as url from 'url';
 import {get_comments} from './comments';
 import {get_headline} from './headline';
 import {get_user_timeline} from './user_timeline';
 import {SimpleBrowser} from './util';
 
-function logErrorAndFail(res: Response, r: Error) {
-  console.error(r.message);
-  return res.status(500).end();
-}
-
 export function buildRouter(browser: SimpleBrowser) {
   const router = Router();
 
-  router.get(/\/timeline\/(.+)/, async (req, res) =>
+  const reduceObjectArray = (arr: object[]) => arr
+    .map(h => JSON.stringify(h))
+    .reduce((p, v) => `${p}\n${v}`, '')
+    .trim();
+
+  router.get(/\/timeline\/(.+)/, async (req, res, next) =>
     await get_user_timeline(browser, req.params[0])
-      .then(posts => {
-        posts.forEach(p => res.write(`${JSON.stringify(p)}\n`));
-        res.status(200).end();
-      })
-      .catch(r => logErrorAndFail(res, r)));
+      .then(posts =>
+        res.status(200).send(reduceObjectArray(posts)).end())
+      .catch(next));
 
   router
     .get('/headline', (req, res) => {
@@ -45,20 +43,22 @@ export function buildRouter(browser: SimpleBrowser) {
           }),
         });
     })
-    .get('/headline/:categoryId([0-9]+)', async (req, res) =>
-      await get_headline(browser, req.params.categoryId).then(headlines => {
-        headlines.forEach(h => res.write(`${JSON.stringify(h)}\n`));
-        res.status(200).end();
-      })
-        .catch(r => logErrorAndFail(res, r)));
+    .get('/headline/:categoryId([0-9]+)', async (req, res, next) =>
+      await get_headline(browser, req.params.categoryId)
+        .then(headlines =>
+          res.status(200).send(reduceObjectArray(headlines)).end())
+        .catch(next));
 
-  router.get(/\/comments\/(.+)/, async (req, res) =>
+  router.get(/\/comments\/(.+)/, async (req, res, next) =>
     await get_comments(browser, req.params[0])
-      .then(comments => {
-        comments.forEach(c => res.write(`${JSON.stringify(c)}\n`));
-        return res.status(200).end();
-      })
-      .catch(r => logErrorAndFail(res, r)));
+      .then(comments =>
+        res.status(200).send(reduceObjectArray(comments)).end())
+      .catch(next));
+
+  router.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    console.error(err);
+    res.status(500).end();
+  });
 
   return router;
 }

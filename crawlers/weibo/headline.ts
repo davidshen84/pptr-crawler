@@ -1,4 +1,3 @@
-import {IPost, IUser} from './types';
 import {normalizeTextContent, sanitize_timestring, SimpleBrowser} from './util';
 
 export async function get_headline(browser: SimpleBrowser, category: string, loop: number = 0) {
@@ -41,8 +40,8 @@ export async function get_headline(browser: SimpleBrowser, category: string, loo
           display_name: await h.$eval('div.list_des > div.subinfo_box a:nth-child(2)', e => e.textContent),
           image_url: await h.$eval('div.list_des > div.subinfo_box a img', e => (e as HTMLImageElement).src),
           url: await h.$eval('div.list_des > div.subinfo_box a', e => (e as HTMLAnchorElement).href),
-        } as IUser,
-      } as IPost;
+        },
+      };
     }))
     .then(async result => {
       await page.close();
@@ -50,6 +49,5 @@ export async function get_headline(browser: SimpleBrowser, category: string, loo
     }, async r => {
       await page.close();
       throw r;
-    })
-    ;
+    });
 }
