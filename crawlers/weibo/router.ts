@@ -43,7 +43,7 @@ export function buildRouter(browser: SimpleBrowser) {
           }),
         });
     })
-    .get('/headline/:categoryId([0-9]+)', async (req, res, next) =>
+    .get('/headline/:categoryId', async (req, res, next) =>
       await get_headline(browser, req.params.categoryId)
         .then(headlines =>
           res.status(200).send(reduceObjectArray(headlines)).end())

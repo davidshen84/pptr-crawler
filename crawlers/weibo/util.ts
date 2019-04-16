@@ -12,27 +12,39 @@ export const writeFile = promisify(fs.writeFile);
  * @return {Date} The converted {Date} object, or the '<no date>' literal.
  */
 export function sanitize_timestring(timestring: string | null) {
-  let date: Date | string = '<no date>';
   if (!timestring)
-    return date;
+    return '';
 
-  timestring = timestring || '';
+  if (!isNaN(Date.parse(timestring)))
+    return new Date(Date.parse(timestring));
+
   const localTime = new Date();
 
-  const p1 = /今天 (\d{2}):(\d{2})/u;
-  const m1 = p1.exec(timestring);
+  const regexToday = /今天 (\d{2}):(\d{2})/u;
+  const matchToday = regexToday.exec(timestring);
 
-  if (m1)
-    date = new Date(localTime.getFullYear(), localTime.getMonth(), localTime.getDate(),
-      parseInt(m1[1]), parseInt(m1[2]));
-  else {
-    const p2 = /(\d{1,2})月(\d{1,2})日 (\d{2}):(\d{2})/u;
-    const m2 = p2.exec(timestring);
-    if (m2)
-      date = new Date(localTime.getFullYear(), parseInt(m2[1]) - 1, parseInt(m2[2]), parseInt(m2[3]), parseInt(m2[4]));
+  if (matchToday)
+    return new Date(localTime.getFullYear(), localTime.getMonth(), localTime.getDate(),
+      parseInt(matchToday[1]), parseInt(matchToday[2]));
+
+  const regexThisYear = /(\d{1,2})月(\d{1,2})日 (\d{2}):(\d{2})/u;
+  const matchThisYear = regexThisYear.exec(timestring);
+  if (matchThisYear) {
+    const now = new Date();
+    return new Date(now.getFullYear(), parseInt(matchThisYear[1]) - 1, parseInt(matchThisYear[2]),
+      parseInt(matchThisYear[3]), parseInt(matchThisYear[4]));
   }
 
-  return date;
+  const regexMinutesAgo = /\d{1,2}分钟前/u;
+  const matchMinutesAgo = regexMinutesAgo.exec(timestring);
+  if (matchMinutesAgo) {
+    const minutesDiff = parseInt(matchMinutesAgo[0]);
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - minutesDiff);
+    return now;
+  }
+
+  return timestring;
 }
 
 export async function writePosts(posts: IPost[], path: string = 'posts.txt') {
@@ -65,7 +77,11 @@ export class SimpleBrowser {
 
   constructor() {
     this.promiseBrowser = launch({
-      args: ['--no-sandbox', '--incognito'],
+      args: [
+        '--no-sandbox',
+        '--incognito',
+        '--proxy-server=socks5://127.0.0.1:1080',
+      ],
       headless: true,
       ignoreHTTPSErrors: true,
     })
@@ -82,6 +98,7 @@ export class SimpleBrowser {
     await page.on('request', r => !whitelist.includes(r.resourceType()) ? r.abort() : r.continue())
       .setRequestInterception(true);
     await page.goto(url, {waitUntil: 'domcontentloaded'});
+
     if (waitFor)
       await page.waitForSelector(waitFor.selector, waitFor.options);
 
@@ -92,4 +109,8 @@ export class SimpleBrowser {
     const browser = await this.promiseBrowser;
     await browser.close();
   }
+}
+
+export function removeQueryString(url: string) {
+  return url.split('?')[0];
 }
