@@ -1,17 +1,24 @@
 import {expect} from 'chai';
-import {ElementHandle} from 'puppeteer';
+import {ElementHandle, Page} from 'puppeteer';
+import {commentsSelector, parseCommentElement, waitFor as waitForComments} from './comments';
 import {headlineSelector, parseHeadlineElement, waitFor as waitForHeadline} from './headline';
 import {feedListSelector, parseUserTimelineElement, waitFor as waitForTimeline} from './user_timeline';
 import {SimpleBrowser} from './util';
 
-describe('HTML element parser.', () => {
+describe('HTML element parser', () => {
   const browser = new SimpleBrowser();
 
-  it('should parse user timeline.', async () => {
-    const url = `file:///${process.cwd()}/test/data/user_timeline.html`;
-    const page = await browser.newPage(url, waitForTimeline);
-    const elementHandle = await page.$(feedListSelector) as ElementHandle;
-    const result = await parseUserTimelineElement(page, elementHandle);
+  async function getResult<T>(filename: string, waitFor: any, selector: string,
+                              parser: (page: Page, handle: ElementHandle) => Promise<T>) {
+    const url = `file:///${process.cwd()}/test/data/${filename}`;
+    const page = await browser.newPage(url, waitFor);
+    const elementHandle = await page.$(selector) as ElementHandle;
+
+    return await parser(page, elementHandle);
+  }
+
+  it('should parse user timeline', async () => {
+    const result = await getResult('user_timeline.html', waitForTimeline, feedListSelector, parseUserTimelineElement);
 
     expect(result).to.be.ok;
     expect(result.id).to.eq('4348437758136041');
@@ -35,10 +42,7 @@ describe('HTML element parser.', () => {
   }).timeout(50000);
 
   it('should parse headline metadata', async () => {
-    const url = `file:///${process.cwd()}/test/data/headline.html`;
-    const page = await browser.newPage(url, waitForHeadline);
-    const elementHandle = await page.$(headlineSelector) as ElementHandle;
-    const result = await parseHeadlineElement(page, elementHandle);
+    const result = await getResult('headline.html', waitForHeadline, headlineSelector, parseHeadlineElement);
 
     expect(result).to.be.ok;
     expect(result.comment_count).to.be.eq(0);
@@ -57,6 +61,21 @@ describe('HTML element parser.', () => {
       .eq('https://tva3.sinaimg.cn/crop.81.0.340.340.50/006g7dzLjw8exfadzpq8dj30dw09gq55.jpg');
     expect(user.url).to.be.eq('file:///wanbianbeimei');
   }).timeout(50000);
+
+  it('should parse comment', async () => {
+    const result = await getResult('comments.html', waitForComments, commentsSelector, parseCommentElement('feed id'));
+    expect(result).to.be.ok;
+    expect(result.commentId).to.eq('4363127539648056');
+    expect(result.user).to.be.ok;
+    expect(result.feedId).to.eq('feed id');
+    expect(result.text).to.contain('耿墨池是你的粉丝');
+
+    const user = result.user;
+    expect(user.display_name).to.eq('佟大为');
+    expect(user.url).to.contain('tongdawei');
+    expect(user.id).to.eq('1195210033');
+    expect(user.image_url).to.eq('//tva4.sinaimg.cn/crop.0.0.640.640.50/473d7531jw8ex239o77eaj20hs0hsab8.jpg');
+  });
 
   after(async () => await browser.close());
 

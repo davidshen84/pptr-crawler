@@ -3,7 +3,7 @@ import * as R from 'ramda';
 import {extractUserId, normalizeTextContent, SimpleBrowser, writeFile} from './util';
 
 export const feedListSelector = 'div.WB_feed[node-type="feed_list"] div[action-type="feed_list_item"]';
-export const waitFor = {selector: feedListSelector, options: {timeout: 10000}};
+export const waitFor = {selector: feedListSelector, options: {timeout: 20000}};
 
 export const parseUserTimelineElement = R.curry(async (page: Page, h: ElementHandle) => ({
   comment_count: parseInt(await h.$eval('.WB_handle li:nth-child(3) em:nth-child(2)', e => e.textContent) || '0'),
