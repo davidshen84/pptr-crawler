@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {ElementHandle} from 'puppeteer';
-import {extractHeadline, headlineSelector, waitFor} from './weibo/headline';
+import {headlineSelector, parseHeadlineElement, waitFor} from './weibo/headline';
 import {SimpleBrowser} from './weibo/util';
 
 describe('headline functions', () => {
@@ -10,7 +10,7 @@ describe('headline functions', () => {
     const url = `file:///${process.cwd()}/test/data/headline.html`;
     const page = await browser.newPage(url, waitFor);
     const elementHandle = await page.$(headlineSelector) as ElementHandle;
-    const result = await extractHeadline(page, elementHandle);
+    const result = await parseHeadlineElement(page, elementHandle);
 
     expect(result).to.be.ok;
     expect(result.comment_count).to.be.eq(0);

@@ -5,7 +5,7 @@ import {normalizeTextContent, removeQueryString, sanitize_timestring, SimpleBrow
 export const headlineSelector = '#plc_main .UG_contents .UG_list_a,.UG_list_b';
 export const waitFor = {selector: '.UG_contents', options: {timeout: 10000}};
 
-export const extractHeadline = R.curry(async (page: Page, handle: ElementHandle) => {
+export const parseHeadlineElement = R.curry(async (page: Page, handle: ElementHandle) => {
   const counts: number[] = await handle.$$eval('.subinfo_box .subinfo_rgt', elements =>
     elements.map(e => (e.querySelector('em:nth-child(2)') || {textContent: '0'}).textContent)
       .map(s => parseInt(s || '0')),
@@ -44,10 +44,11 @@ export async function get_headline(browser: SimpleBrowser, category: string, loo
   }
 
   const headlineHandles = await page.$$(headlineSelector);
-  await writeFile('headline.html', await page.content());
+  const mapper = parseHeadlineElement(page);
+  // await writeFile('headline.html.data', await page.content());
   // await page.screenshot({path: 'screen.png', fullPage: true});
 
-  return await Promise.all(headlineHandles.map(extractHeadline(page)))
+  return await Promise.all(headlineHandles.map(mapper))
     .then(async result => {
       await page.close();
       return result;

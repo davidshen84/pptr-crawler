@@ -82,7 +82,7 @@ export class SimpleBrowser {
         '--incognito',
         '--proxy-server=socks5://127.0.0.1:1080',
       ],
-      headless: true,
+      headless: false,
       ignoreHTTPSErrors: true,
     })
       .then(browser =>
