@@ -1,12 +1,10 @@
 import fs from 'fs';
-import {Browser, ElementHandle, launch, Page, WaitForSelectorOptions} from 'puppeteer';
+import {Browser, ElementHandle, launch, Page, Request, WaitForSelectorOptions} from 'puppeteer';
 import {promisify} from 'util';
-import {IPost} from './types';
 
 export const writeFile = promisify(fs.writeFile);
 
-/**
- * Try to guess and convert a date time display string to a {Date}.
+/** Try to guess and convert a date time display string to a {Date}.
  *
  * @param {string} timestring The display date time string.
  * @return {Date} The converted {Date} object, or the '<no date>' literal.
@@ -47,14 +45,8 @@ export function sanitize_timestring(timestring: string | null) {
   return timestring;
 }
 
-export async function writePosts(posts: IPost[], path: string = 'posts.txt') {
-  const data = posts.map(v => JSON.stringify(v))
-    .reverse()
-    .reduce((a, v) => `${v}\n${a}`, '')
-    .trim();
-  return await writeFile(path, data, {flag: 'w'});
-}
-
+/** Remove empty spaces from a string.
+ */
 export function normalizeTextContent(s: string | null) {
   return (s || '').replace(/[ \n\t]+/g, ' ');
 }
@@ -74,8 +66,11 @@ export async function extractUserId(page: Page, h: ElementHandle): Promise<strin
 export class SimpleBrowser {
 
   private readonly promiseBrowser: Promise<Browser>;
+  private readonly hostnameRegEx = /.*:\/\/([a-z0-9.]+).*/i;
+  private resourceWhitelist = ['document', 'script', 'xhr', 'fetch'];
+  private hostnameWhitelist = ['sina', 'weibo'];
 
-  constructor() {
+  constructor(private enableJS = true) {
     this.promiseBrowser = launch({
       args: [
         '--no-sandbox',
@@ -91,12 +86,28 @@ export class SimpleBrowser {
   }
 
   public async newPage(url: string, waitFor?: { selector: string, options: WaitForSelectorOptions }) {
-    const whitelist = ['document', 'script', 'xhr', 'fetch'];
     const browser = await this.promiseBrowser;
     const page = await browser.newPage();
 
-    await page.on('request', r => !whitelist.includes(r.resourceType()) ? r.abort() : r.continue())
-      .setRequestInterception(true);
+    await page.setJavaScriptEnabled(this.enableJS);
+    await page.on('request', r => {
+      if (this.notInResourceWhitelist(r)) {
+        // console.log(`Not in resource whitelist: ${r.resourceType()}`);
+        return r.abort();
+      }
+
+      const hostnameMatches = this.hostnameRegEx.exec(r.url()) as RegExpMatchArray;
+      const hostname = hostnameMatches ? hostnameMatches[1] : null;
+      if (hostname && this.notInHostnameWhitelist(hostname)) {
+        // console.log(`Not in hostname whitelist: ${hostname}`);
+        return r.abort();
+      }
+
+      return r.continue();
+    })
+      .setRequestInterception(true)
+    ;
+
     await page.goto(url, {waitUntil: 'domcontentloaded'});
 
     if (waitFor)
@@ -109,6 +120,17 @@ export class SimpleBrowser {
     const browser = await this.promiseBrowser;
     await browser.close();
   }
+
+  private notInHostnameWhitelist(hostname: string) {
+    return !this.hostnameWhitelist
+      .map(d => hostname.indexOf(d) > -1)
+      .reduce((p, v) => p || v, false);
+  }
+
+  private notInResourceWhitelist(request: Request) {
+    return !this.resourceWhitelist.includes(request.resourceType());
+  }
+
 }
 
 export function removeQueryString(url: string) {

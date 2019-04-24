@@ -2,8 +2,8 @@ import {ElementHandle, Page} from 'puppeteer';
 import * as R from 'ramda';
 import {extractUserId, normalizeTextContent, SimpleBrowser, writeFile} from './util';
 
-export const feedListSelector = 'div.WB_feed[node-type="feed_list"] div[action-type="feed_list_item"]';
-export const waitFor = {selector: feedListSelector, options: {timeout: 20000}};
+export const selector = 'div.WB_feed[node-type="feed_list"] div[action-type="feed_list_item"]';
+export const waitFor = {selector, options: {timeout: 20000}};
 
 export const parseUserTimelineElement = R.curry(async (page: Page, h: ElementHandle) => ({
   comment_count: parseInt(await h.$eval('.WB_handle li:nth-child(3) em:nth-child(2)', e => e.textContent) || '0'),
@@ -34,7 +34,7 @@ export const parseUserTimelineElement = R.curry(async (page: Page, h: ElementHan
 export async function get_user_timeline(browser: SimpleBrowser, userId: string) {
   const url = `https://weibo.com/${userId}`;
   const page = await browser.newPage(url, waitFor);
-  const feedsHandlers = await page.$$(feedListSelector);
+  const feedsHandlers = await page.$$(selector);
   const mapper = parseUserTimelineElement(page);
 
   // await page.screenshot({path: 'screen.png', fullPage: true});

@@ -2,8 +2,9 @@ import {ElementHandle, Page} from 'puppeteer';
 import * as R from 'ramda';
 import {normalizeTextContent, SimpleBrowser, writeFile} from './util';
 
+export const selector = 'div.WB_feed div[node-type=comment_list] > div[comment_id]';
+export const waitFor = {selector, options: {timeout: 50000}};
 const feedSelector = 'div.WB_feed[node-type=feed_list] div[tbinfo]';
-export const commentsSelector = 'div.WB_feed div[node-type=comment_list] > div[comment_id]';
 
 export const parseCommentElement = R.curry(async (feedId: string, page: Page, handle: ElementHandle) => {
   return ({
@@ -23,13 +24,11 @@ export const parseCommentElement = R.curry(async (feedId: string, page: Page, ha
   });
 });
 
-export const waitFor = {selector: commentsSelector, options: {timeout: 50000}};
-
 export async function get_comments(browser: SimpleBrowser, postId: string = '1860563805/Hhm7u5f61') {
   const url = `https://weibo.com/${postId}`;
   const page = await browser.newPage(url, waitFor);
   const feedHandler = await page.$(feedSelector);
-  const commentsHandler = await page.$$(commentsSelector);
+  const commentsHandler = await page.$$(selector);
   const feedId = await page.evaluate((e: Element) => e.getAttribute('mid'), feedHandler) as string;
   const mapper = parseCommentElement(feedId, page);
 

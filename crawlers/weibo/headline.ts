@@ -2,8 +2,8 @@ import {ElementHandle, Page} from 'puppeteer';
 import * as R from 'ramda';
 import {normalizeTextContent, removeQueryString, sanitize_timestring, SimpleBrowser, writeFile} from './util';
 
-export const headlineSelector = '#plc_main .UG_contents .UG_list_a,.UG_list_b';
-export const waitFor = {selector: '.UG_contents', options: {timeout: 10000}};
+export const selector = '#plc_main .UG_contents .UG_list_a,.UG_list_b';
+export const waitFor = {selector, options: {timeout: 10000}};
 
 export const parseHeadlineElement = R.curry(async (page: Page, handle: ElementHandle) => {
   const counts: number[] = await handle.$$eval('.subinfo_box .subinfo_rgt', elements =>
@@ -43,7 +43,7 @@ export async function get_headline(browser: SimpleBrowser, category: string, loo
     await page.waitFor(15000);
   }
 
-  const headlineHandles = await page.$$(headlineSelector);
+  const headlineHandles = await page.$$(selector);
   const mapper = parseHeadlineElement(page);
   // await writeFile('headline.html.data', await page.content());
   // await page.screenshot({path: 'screen.png', fullPage: true});

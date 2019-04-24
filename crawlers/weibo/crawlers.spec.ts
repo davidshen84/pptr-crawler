@@ -1,14 +1,15 @@
 import {expect} from 'chai';
-import {ElementHandle, Page} from 'puppeteer';
-import {commentsSelector, parseCommentElement, waitFor as waitForComments} from './comments';
-import {headlineSelector, parseHeadlineElement, waitFor as waitForHeadline} from './headline';
-import {feedListSelector, parseUserTimelineElement, waitFor as waitForTimeline} from './user_timeline';
+import {ElementHandle, Page, WaitForSelectorOptions} from 'puppeteer';
+import {parseCommentElement, selector as commentsSelector, waitFor as waitForComments} from './comments';
+import {parseHeadlineElement, selector as headlineSelector, waitFor as waitForHeadline} from './headline';
+import {parseUserTimelineElement, selector as timelineSelector, waitFor as waitForTimeline} from './user_timeline';
 import {SimpleBrowser} from './util';
 
 describe('HTML element parser', () => {
-  const browser = new SimpleBrowser();
+  const browser = new SimpleBrowser(false);
 
-  async function getResult<T>(filename: string, waitFor: any, selector: string,
+  async function getResult<T>(filename: string, waitFor: { selector: string, options: WaitForSelectorOptions },
+                              selector: string,
                               parser: (page: Page, handle: ElementHandle) => Promise<T>) {
     const url = `file:///${process.cwd()}/test/data/${filename}`;
     const page = await browser.newPage(url, waitFor);
@@ -18,7 +19,7 @@ describe('HTML element parser', () => {
   }
 
   it('should parse user timeline', async () => {
-    const result = await getResult('user_timeline.html', waitForTimeline, feedListSelector, parseUserTimelineElement);
+    const result = await getResult('user_timeline.html', waitForTimeline, timelineSelector, parseUserTimelineElement);
 
     expect(result).to.be.ok;
     expect(result.id).to.eq('4348437758136041');
@@ -39,7 +40,7 @@ describe('HTML element parser', () => {
     expect(user.url).to.contain('shishi310');
     expect(user.display_name).to.contain('刘诗诗');
     expect(user.verified).to.be.true;
-  }).timeout(50000);
+  }).timeout(5000);
 
   it('should parse headline metadata', async () => {
     const result = await getResult('headline.html', waitForHeadline, headlineSelector, parseHeadlineElement);
@@ -60,7 +61,7 @@ describe('HTML element parser', () => {
     expect(user.image_url).to.be
       .eq('https://tva3.sinaimg.cn/crop.81.0.340.340.50/006g7dzLjw8exfadzpq8dj30dw09gq55.jpg');
     expect(user.url).to.be.eq('file:///wanbianbeimei');
-  }).timeout(50000);
+  }).timeout(5000);
 
   it('should parse comment', async () => {
     const result = await getResult('comments.html', waitForComments, commentsSelector, parseCommentElement('feed id'));
