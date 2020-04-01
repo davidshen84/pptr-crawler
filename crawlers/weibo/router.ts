@@ -5,6 +5,14 @@ import {get_headline} from './headline';
 import {get_user_timeline} from './user_timeline';
 import {SimpleBrowser} from './util';
 
+function return_empty_array(res: Response, next: NextFunction) {
+  res.status(200)
+    .contentType('application/json')
+    .send([])
+    .end();
+  return next();
+}
+
 export function buildRouter(browser: SimpleBrowser) {
   const router = Router();
 
@@ -16,7 +24,7 @@ export function buildRouter(browser: SimpleBrowser) {
   router.get(/\/timeline\/(.+)/, async (req, res, next) =>
     await get_user_timeline(browser, req.params[0])
       .then(posts =>
-        res.status(200).send(reduceObjectArray(posts)).end())
+        res.status(200).contentType('application/json').send(reduceObjectArray(posts)).end())
       .catch(next));
 
   router
@@ -46,14 +54,27 @@ export function buildRouter(browser: SimpleBrowser) {
     .get('/headline/:categoryId', async (req, res, next) =>
       await get_headline(browser, req.params.categoryId)
         .then(headlines =>
-          res.status(200).send(reduceObjectArray(headlines)).end())
+          res
+            .status(200)
+            .contentType('application/json')
+            // .send(reduceObjectArray(headlines))
+            .send(headlines)
+            .end())
         .catch(next));
 
   router.get(/\/comments\/(.+)/, async (req, res, next) =>
     await get_comments(browser, req.params[0])
       .then(comments =>
-        res.status(200).send(reduceObjectArray(comments)).end())
-      .catch(next));
+        res
+          .status(200)
+          .contentType('application/json')
+          // .send(reduceObjectArray(comments))
+          .send(comments)
+          .end())
+      .catch(reason => {
+        console.error(reason);
+        return_empty_array(res, next);
+      }));
 
   router.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err);

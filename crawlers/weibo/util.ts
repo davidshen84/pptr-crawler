@@ -1,6 +1,7 @@
 import fs from 'fs';
-import {Browser, ElementHandle, launch, Page, Request, WaitForSelectorOptions} from 'puppeteer';
+import {Browser, ElementHandle, launch, Page, Request, Response} from 'puppeteer';
 import {promisify} from 'util';
+import {IWaitForOptions} from './types';
 
 export const writeFile = promisify(fs.writeFile);
 
@@ -63,6 +64,22 @@ export async function extractUserId(page: Page, h: ElementHandle): Promise<strin
   return '';
 }
 
+/**
+ * todo: delete this method
+ * @param page
+ * @param response
+ */
+async function debug_page(page: Page, response: Response | null) {
+  const ts = Date.now();
+  await page.screenshot({path: `debug-${ts}.png`});
+  if (response)
+    console.debug({
+      status: response.status(),
+      statusText: response.statusText(),
+    });
+  return writeFile(`debug-${ts}.html`, await page.content());
+}
+
 export class SimpleBrowser {
 
   private readonly promiseBrowser: Promise<Browser>;
@@ -75,31 +92,40 @@ export class SimpleBrowser {
       args: [
         '--no-sandbox',
         '--incognito',
-        '--proxy-server=socks5://127.0.0.1:1080',
+        // '--proxy-server=socks5://127.0.0.1:1080',
       ],
       headless: true,
       ignoreHTTPSErrors: true,
     })
       .then(browser =>
         browser.on('disconnected', () =>
-          console.log('Puppeteer disconnected from the browser process.')));
+          console.log('Puppeteer disconnected from the browser process.')))
+    /*
+          .then(async browser => {
+            console.log((await browser.userAgent()));
+            return browser;
+          });
+    */
+    ;
   }
 
-  public async newPage(url: string, waitFor?: { selector: string, options: WaitForSelectorOptions }) {
+  public async newPage(url: string, waitFor?: IWaitForOptions): Promise<Page | undefined> {
     const browser = await this.promiseBrowser;
     const page = await browser.newPage();
 
     await page.setJavaScriptEnabled(this.enableJS);
     await page.on('request', r => {
+      // tslint:disable-next-line:curly
       if (this.notInResourceWhitelist(r)) {
-        // console.log(`Not in resource whitelist: ${r.resourceType()}`);
+        // console.debug(`Not in resource whitelist: ${r.resourceType()}`);
         return r.abort();
       }
 
       const hostnameMatches = this.hostnameRegEx.exec(r.url()) as RegExpMatchArray;
       const hostname = hostnameMatches ? hostnameMatches[1] : null;
+      // tslint:disable-next-line:curly
       if (hostname && this.notInHostnameWhitelist(hostname)) {
-        // console.log(`Not in hostname whitelist: ${hostname}`);
+        // console.debug(`Not in hostname whitelist: ${hostname}`);
         return r.abort();
       }
 
@@ -108,10 +134,24 @@ export class SimpleBrowser {
       .setRequestInterception(true)
     ;
 
-    await page.goto(url, {waitUntil: 'domcontentloaded'});
+    const response = await page.goto(url, {waitUntil: 'domcontentloaded'});
+    if (!Boolean(response) || response?.status() !== 200) {
+      console.error(`Failed to load the page: ${url}`);
+      console.error(response?.statusText());
 
+      return undefined;
+    }
     if (waitFor)
-      await page.waitForSelector(waitFor.selector, waitFor.options);
+      await page.waitForSelector(waitFor.selector, waitFor.options)
+        .catch(async reason => {
+          console.warn({
+            message: reason.message,
+            name: reason.name,
+          });
+          await debug_page(page, response);
+          await page.close();
+          throw new Error(reason.message);
+        });
 
     return page;
   }

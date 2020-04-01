@@ -1,3 +1,5 @@
+import {WaitForSelectorOptions} from 'puppeteer';
+
 export interface IUser {
   id: string;
   url: string;
@@ -29,4 +31,9 @@ export interface IComment {
   commentId: string;
   text: string;
   user: IUser;
+}
+
+export interface IWaitForOptions {
+  selector: string;
+  options: WaitForSelectorOptions;
 }
