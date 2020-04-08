@@ -24,8 +24,11 @@ export function buildRouter(browser: SimpleBrowser) {
   router.get(/\/timeline\/(.+)/, async (req, res, next) =>
     await get_user_timeline(browser, req.params[0])
       .then(posts =>
-        res.status(200).contentType('application/json').send(reduceObjectArray(posts)).end())
-      .catch(next));
+        res.status(200).contentType('application/json')
+          // .send(reduceObjectArray(posts))
+          .send(posts)
+          .end())
+      .catch(reason => next(reason)));
 
   router
     .get('/headline', (req, res) => {
@@ -60,7 +63,7 @@ export function buildRouter(browser: SimpleBrowser) {
             // .send(reduceObjectArray(headlines))
             .send(headlines)
             .end())
-        .catch(next));
+        .catch(reason => next(reason)));
 
   router.get(/\/comments\/(.+)/, async (req, res, next) =>
     await get_comments(browser, req.params[0])
@@ -77,7 +80,8 @@ export function buildRouter(browser: SimpleBrowser) {
       }));
 
   router.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error(err);
+    if (Boolean(err))
+      console.error(err);
     res.status(500).end();
   });
 

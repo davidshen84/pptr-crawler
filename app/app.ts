@@ -8,14 +8,15 @@ import Signals = NodeJS.Signals;
   const app = express();
   const browser = new SimpleBrowser();
 
+  app.use((req, res, next) => {
+    console.info(`${req.method} ${req.url} at ${new Date()}.`);
+    next();
+  });
+
   app.get('/shutdown', async (req, res) => {
     await browser.close();
     server.close(() => process.exit(0));
     res.status(200).end();
-  });
-  app.use((req, res, next) => {
-    console.info(`${req.method} ${req.url} at ${new Date()}.`);
-    next();
   });
 
   app.use('/weibo', weibo_router(browser));
@@ -25,18 +26,16 @@ import Signals = NodeJS.Signals;
       return console.error(err);
     const port = (server.address() as AddressInfo).port;
     console.info(`Server is listening on port ${port}!`);
-  });
-
-  server.on('close', () => {
-    console.log('Server is closing!');
-  });
-
-  server.on('error', async e => {
-    console.error(e);
-    await browser.close();
-    server.close();
-    process.exit(-1);
-  });
+  })
+    .on('close', () => {
+      console.log('Server is closing!');
+    })
+    .on('error', async e => {
+      console.error(e);
+      await browser.close();
+      server.close();
+      process.exit(-1);
+    });
 })();
 
 (['SIGINT', 'SIGTERM'] as Signals[]).forEach(s => {

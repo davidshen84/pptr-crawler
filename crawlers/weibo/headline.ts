@@ -1,6 +1,6 @@
 import {ElementHandle, Page} from 'puppeteer';
 import * as R from 'ramda';
-import {normalizeTextContent, removeQueryString, sanitize_timestring, SimpleBrowser, writeFile} from './util';
+import {normalizeTextContent, removeQueryString, sanitize_timestring, SimpleBrowser} from './util';
 
 export const selector = '#plc_main .UG_contents .UG_list_a,.UG_list_b';
 export const waitFor = {selector, options: {timeout: 10000}};
@@ -31,6 +31,9 @@ export const parseHeadlineElement = R.curry(async (page: Page, handle: ElementHa
 export async function get_headline(browser: SimpleBrowser, category: string, loop: number = 0) {
   const url = `https://weibo.com/?category=${category}`;
   const page = await browser.newPage(url, waitFor);
+
+  if (page === undefined)
+    return [];
 
   while (loop-- > 0) {
     await page.$eval('.W_loading', element => {

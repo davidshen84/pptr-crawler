@@ -14,4 +14,10 @@ describe('util functions', () => {
     now.setMinutes(now.getMinutes() - 36);
     expect(ts.getMinutes()).to.be.eq(now.getMinutes());
   });
+
+  it('should parse date and time in current year (current year is 2020)', () => {
+    const ts = sanitize_timestring('2月6日 23:10') as Date;
+    const now = new Date(2020, 1, 6, 23, 10);
+    expect(ts.toDateString()).to.be.eq(now.toDateString());
+  });
 });

@@ -144,13 +144,9 @@ export class SimpleBrowser {
     if (waitFor)
       await page.waitForSelector(waitFor.selector, waitFor.options)
         .catch(async reason => {
-          console.warn({
-            message: reason.message,
-            name: reason.name,
-          });
           await debug_page(page, response);
           await page.close();
-          throw new Error(reason.message);
+          throw new Error(reason);
         });
 
     return page;

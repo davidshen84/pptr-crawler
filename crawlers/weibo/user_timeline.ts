@@ -1,6 +1,7 @@
 import {ElementHandle, Page} from 'puppeteer';
 import * as R from 'ramda';
-import {extractUserId, normalizeTextContent, SimpleBrowser, writeFile} from './util';
+import {IPost} from './types';
+import {extractUserId, normalizeTextContent, SimpleBrowser} from './util';
 
 export const selector = 'div.WB_feed[node-type="feed_list"] div[action-type="feed_list_item"]';
 export const waitFor = {selector, options: {timeout: 20000}};
@@ -29,24 +30,33 @@ export const parseUserTimelineElement = R.curry(async (page: Page, h: ElementHan
     url: (await h.$eval('div.WB_info a', e => (e as HTMLAnchorElement).href)).split('?')[0],
     verified: (await h.$('div.WB_info a > i.icon_approve_gold')) != null,
   },
-}));
+} as IPost));
 
-export async function get_user_timeline(browser: SimpleBrowser, userId: string) {
+export async function get_user_timeline(browser: SimpleBrowser, userId: string): Promise<IPost[]> {
   const url = `https://weibo.com/${userId}`;
   const page = await browser.newPage(url, waitFor);
-  const feedsHandlers = await page.$$(selector);
-  const mapper = parseUserTimelineElement(page);
 
-  // await page.screenshot({path: 'screen.png', fullPage: true});
-  // await writeFile('user_timeline.html.data', await page.content());
+  if (page === undefined)
+    return Promise.resolve([] as IPost[]);
 
-  return await Promise.all(feedsHandlers.map(mapper))
-    .then(async posts => {
+  try {
+    const feedsHandlers = await page.$$(selector);
+    const mapper = parseUserTimelineElement(page);
+
+    // await page.screenshot({path: 'screen.png', fullPage: true});
+    // await writeFile('user_timeline.html.data', await page.content());
+
+    return await Promise.all(feedsHandlers.map(mapper))
+      .then(async posts => {
+        await page.close();
+        return posts;
+      });
+  } catch (e) {
+    console.error(e);
+
+    return [] as IPost[];
+  } finally {
+    if (!page?.isClosed())
       await page.close();
-      return posts;
-    })
-    .catch(async r => {
-      await page.close();
-      throw r;
-    });
+  }
 }

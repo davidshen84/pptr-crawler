@@ -30,6 +30,7 @@ export interface IComment {
   feedId: string;
   commentId: string;
   text: string;
+  timestamp: Date | string;
   user: IUser;
 }
 
