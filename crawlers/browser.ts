@@ -79,13 +79,15 @@ export class SimpleBrowser {
 
       return undefined;
     }
-    if (waitFor)
-      await page.waitForSelector(waitFor.selector, waitFor.options)
-        .catch(async reason => {
-          await debug_page(page, response);
-          await page.close();
-          throw new Error(reason);
-        });
+
+    if (waitFor) try {
+      await page.waitForSelector(waitFor.selector, waitFor.options);
+      return page;
+    } catch (e) {
+      await debug_page(page, response);
+      await page.close();
+      throw new Error(e);
+    }
 
     return page;
   }

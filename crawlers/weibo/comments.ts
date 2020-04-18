@@ -5,7 +5,7 @@ import {IComment} from './types';
 import {normalizeTextContent, sanitize_timestring} from './util';
 
 export const selector = 'div.WB_feed div[node-type=comment_list] > div[comment_id]';
-export const waitFor = {selector, options: {timeout: 10000}};
+export const waitFor = {selector, options: {timeout: 20000}};
 const feedSelector = 'div.WB_feed[node-type=feed_list] div[tbinfo]';
 
 export const parseCommentElement = R.curry(async (feedId: string, page: Page, handle: ElementHandle) => {
