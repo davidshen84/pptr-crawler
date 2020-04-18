@@ -1,9 +1,9 @@
 import {NextFunction, Request, Response, Router} from 'express';
 import * as url from 'url';
+import {SimpleBrowser} from '../browser';
 import {get_comments} from './comments';
 import {get_headline} from './headline';
 import {get_user_timeline} from './user_timeline';
-import {SimpleBrowser} from './util';
 
 function return_empty_array(res: Response, next: NextFunction) {
   res.status(200)

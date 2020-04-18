@@ -1,9 +1,9 @@
 import {expect} from 'chai';
 import {ElementHandle, Page, WaitForSelectorOptions} from 'puppeteer';
+import {SimpleBrowser} from '../browser';
 import {parseCommentElement, selector as commentsSelector, waitFor as waitForComments} from './comments';
 import {parseHeadlineElement, selector as headlineSelector, waitFor as waitForHeadline} from './headline';
 import {parseUserTimelineElement, selector as timelineSelector, waitFor as waitForTimeline} from './user_timeline';
-import {SimpleBrowser} from './util';
 
 describe('HTML element parser', () => {
   const browser = new SimpleBrowser(false);

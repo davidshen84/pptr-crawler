@@ -1,6 +1,7 @@
 import {ElementHandle, Page} from 'puppeteer';
 import * as R from 'ramda';
-import {normalizeTextContent, removeQueryString, sanitize_timestring, SimpleBrowser} from './util';
+import {SimpleBrowser} from '../browser';
+import {normalizeTextContent, removeQueryString, sanitize_timestring} from './util';
 
 export const selector = '#plc_main .UG_contents .UG_list_a,.UG_list_b';
 export const waitFor = {selector, options: {timeout: 10000}};

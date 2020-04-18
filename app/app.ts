@@ -1,7 +1,7 @@
 import express from 'express';
 import {AddressInfo} from 'net';
+import {SimpleBrowser} from '../crawlers/browser';
 import {buildRouter as weibo_router} from '../crawlers/weibo/router';
-import {SimpleBrowser} from '../crawlers/weibo/util';
 import Signals = NodeJS.Signals;
 
 (async () => {

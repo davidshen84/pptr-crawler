@@ -1,7 +1,8 @@
 import {ElementHandle, Page} from 'puppeteer';
 import * as R from 'ramda';
+import {SimpleBrowser} from '../browser';
 import {IPost} from './types';
-import {extractUserId, normalizeTextContent, SimpleBrowser} from './util';
+import {extractUserId, normalizeTextContent} from './util';
 
 export const selector = 'div.WB_feed[node-type="feed_list"] div[action-type="feed_list_item"]';
 export const waitFor = {selector, options: {timeout: 20000}};

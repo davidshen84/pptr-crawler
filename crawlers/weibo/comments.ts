@@ -1,7 +1,8 @@
 import {ElementHandle, Page} from 'puppeteer';
 import * as R from 'ramda';
+import {SimpleBrowser} from '../browser';
 import {IComment} from './types';
-import {normalizeTextContent, sanitize_timestring, SimpleBrowser} from './util';
+import {normalizeTextContent, sanitize_timestring} from './util';
 
 export const selector = 'div.WB_feed div[node-type=comment_list] > div[comment_id]';
 export const waitFor = {selector, options: {timeout: 10000}};
