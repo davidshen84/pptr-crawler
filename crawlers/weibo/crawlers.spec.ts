@@ -13,6 +13,8 @@ describe('HTML element parser', () => {
                               parser: (page: Page, handle: ElementHandle) => Promise<T>) {
     const url = `file:///${process.cwd()}/test/data/${filename}`;
     const page = await browser.newPage(url, waitFor);
+    if (page === undefined)
+      throw new Error('fail');
     const elementHandle = await page.$(selector) as ElementHandle;
 
     return await parser(page, elementHandle);
@@ -31,7 +33,7 @@ describe('HTML element parser', () => {
     expect(result.image_url).to.have.length(3);
     expect(result.like_count).to.eq(360690);
     expect(result.text).to.contain('祝福收到');
-    expect(result.timestamp.toISOString()).to.eq(new Date('2019-03-10T15:30:14.000Z').toISOString());
+    expect((result.timestamp as Date).toISOString()).to.eq(new Date('2019-03-10T15:30:14.000Z').toISOString());
     expect(result.url).to.contain('1304194202/Hkk5py8yt');
     expect(result.user).to.be.ok;
 

@@ -17,6 +17,7 @@
 node_modules/
 
 *~
-*.ts
+*.js
+*.js.map
 
 .ideas/

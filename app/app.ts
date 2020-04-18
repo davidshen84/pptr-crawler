@@ -21,7 +21,7 @@ import Signals = NodeJS.Signals;
 
   app.use('/weibo', weibo_router(browser));
 
-  const server = app.listen(process.env.port || 8888, (err: any) => {
+  const server = app.listen(Number(process.env.PORT) || 8888, (err: any) => {
     if (err)
       return console.error(err);
     const port = (server.address() as AddressInfo).port;

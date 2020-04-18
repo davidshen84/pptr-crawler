@@ -73,7 +73,7 @@ export class SimpleBrowser {
     ;
 
     const response = await page.goto(url, {waitUntil: 'domcontentloaded'});
-    if (!Boolean(response) || response?.status() !== 200) {
+    if (!Boolean(response) || (response?.url().startsWith('http') && response?.status() !== 200)) {
       console.error(`Failed to load the page: ${url}`);
       console.error(response?.statusText());
 
